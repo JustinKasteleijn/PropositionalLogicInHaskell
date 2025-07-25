@@ -1,39 +1,73 @@
+import Data.List (nub)
+import Prelude hiding (showParen)
+
+type Env = [(String, Bool)]
+
 data Formula
   = And Formula Formula 
   | Or Formula Formula 
   | If Formula Formula
   | Iff Formula Formula 
   | Not Formula
-  | Val Bool 
- deriving (Show)
+  | Var String 
+
+instance Show Formula where
+  show (Var s)   = s
+  show (Not f)   = "~" ++ show f
+  show (And f g) = showParen f ++ " ^ " ++ showParen g
+  show (Or f g)  = showParen f ++ " V " ++ showParen g
+  show (If f g)  = showParen f ++ " -> " ++ showParen g
+  show (Iff f g) = showParen f ++ " <-> " ++ showParen g
   
-eval :: Formula -> Bool 
-eval (Val x)   = x
-eval (Not x)   = not $ eval x 
-eval (And x y) = and [eval x, eval y] 
-eval (Or x y)  = or [eval x, eval y] 
-eval (If x y)  = or [not (eval x), eval y] 
-eval (Iff x y) = or [and [eval x, eval y], and [not (eval x), not (eval y)]]
-
-variants :: Formula -> [Formula]
-variants (Val _)   = [Val True, Val False]
-variants (Not f)   = [Not f' | f' <- variants f]
-variants (And x y) = [And x' y' | x' <- variants x, y' <- variants y]
-variants (Or x y)  = [Or x' y'  | x' <- variants x, y' <- variants y]
-variants (If x y)  = [If x' y'  | x' <- variants x, y' <- variants y]
-variants (Iff x y) = [Iff x' y' | x' <- variants x, y' <- variants y]
-
-tautology :: [Formula] -> Bool
-tautology = all eval
-
-logicallyEquivalent :: Formula -> Formula -> Bool 
-logicallyEquivalent f g = (eval' f) == (eval' g) 
-  where 
-    eval' :: Formula -> [Bool]
-    eval' f = map eval (variants f) 
+showParen :: Formula -> String
+showParen f@(Var _) = show f
+showParen f@(Not _) = show f
+showParen f         = "(" ++ show f ++ ")" 
   
+eval :: Formula -> Env -> Bool 
+eval (Var str) env = maybe False id (lookup str env)
+eval (Not f) env   = not $ eval f env 
+eval (And f g) env = eval f env && eval g env
+eval (Or  f g) env = eval f env || eval g env
+eval (If  f g) env = not (eval f env) || eval g env
+eval (Iff f g) env = eval f env == eval g env
+
+vars :: Formula -> [String]
+vars (Var str) = [str] 
+vars (Not f)   = vars f  
+vars (And f g) = vars f ++ vars g
+vars (Or f g)  = vars f ++ vars g
+vars (If f g)  = vars f ++ vars g
+vars (Iff f g) = vars f ++ vars g
+
+envs :: [String] -> [Env] 
+envs [] = [[]]
+envs (x:xs) = [ (x, b) : env | b <- [True, False], env <- envs xs] 
+
+truthTable :: [Env] -> Formula -> String
+truthTable envs f =
+  let
+    variables = nub $ vars f
+    header = unwords variables ++ " | " ++ show f 
+    separator = replicate (length header) '-'
+    rows = [ unwords [showBool (lookupVar v env) | v <- variables] ++ " | " ++ showBool (Just (eval f env))
+           | env <- envs
+           ]
+  in unlines (header : separator : rows)
+ where
+  showBool :: Maybe Bool -> String
+  showBool (Just True)  = "T"
+  showBool (Just False) = "F"
+  showBool Nothing      = "?"
+
+  lookupVar :: String -> Env -> Maybe Bool
+  lookupVar v env = lookup v env
+  
+tautology :: Formula -> Bool 
+tautology f = all (\env -> eval f env) (envs $ vars f) 
+
 main :: IO ()
 main = do 
-  let f = And (And (Val True) (Val True)) (Val True)
-  let g = And (Val True) (And (Val True) (Val True))
-  print $ logicallyEquivalent f g 
+  let f = If (And (Var "p") (Var "q")) (Var "p")
+  putStrLn $ truthTable (envs (nub $ vars f)) f
+  putStrLn $ show $ tautology f 
