@@ -1,0 +1,41 @@
+# Haskell compiled files
+*.hi
+*.o
+*.dyn_o
+*.dyn_hi
+*.prof
+*.aux
+*.hp
+*.eventlog
+*.exe
+
+# Haskell tags / search files
+.tags
+.hasktags
+
+# GHCi REPL history
+.ghci
+
+# Cabal files
+dist/
+dist-newstyle/
+cabal.project.local
+cabal.project.local~  # backup
+*.cabal.local
+
+# Stack files
+.stack-work/
+
+# nix files
+result
+*.nix~
+.shellcheck/
+*.drv
+*.gc
+*.lock
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
