@@ -1,3 +1,5 @@
+module PropositionalLogic where
+
 import Data.List (nub)
 import Prelude hiding (showParen)
 
@@ -66,8 +68,7 @@ truthTable envs f =
 tautology :: Formula -> Bool 
 tautology f = all (\env -> eval f env) (envs $ vars f) 
 
-main :: IO ()
-main = do 
-  let f = If (And (Var "p") (Var "q")) (Var "p")
-  putStrLn $ truthTable (envs (nub $ vars f)) f
-  putStrLn $ show $ tautology f 
+--main :: IO ()
+--main = do 
+--  let f = If (And (Var "p") (Var "q")) (Var "p")
+--  putStrLn $ truthTable (envs (nub $ vars f)) f
