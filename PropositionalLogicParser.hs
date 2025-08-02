@@ -41,14 +41,20 @@ parseAnd = chainl parseNot andOp
 parseNot :: Parser Formula 
 parseNot = Not 
   <$> (char '~' *> whitespace *> parseNot)
-  <|> parseVar
+  <|> parseVar 
+  <|> parseParan
+  
+parseParan :: Parser Formula 
+parseParan = between (char '(' *> whitespace)
+                     (whitespace *> char ')')
+                     parseFormula
 
 parseVar :: Parser Formula 
 parseVar = Var <$> some alpha
 
 main :: IO ()
 main = do 
-  let f = parse parseFormula "~p V q"
+  let f = parse parseFormula "~(p V q)"
   putStrLn $ case f of 
     Left s  -> s
     Right f' -> let f'' = fst f'

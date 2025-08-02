@@ -66,7 +66,13 @@ truthTable envs f =
   lookupVar v env = lookup v env
   
 tautology :: Formula -> Bool 
-tautology f = all (\env -> eval f env) (envs $ vars f) 
+tautology f = all (\env -> eval f env) (envs $ vars f)
+
+contradiction :: Formula -> Bool 
+contradiction f = all (\env -> eval f env) (envs $ vars f)
+
+contingency :: Formula -> Bool 
+contingency f = not (tautology f) && not (contradiction f) 
 
 --main :: IO ()
 --main = do 
